@@ -2,3 +2,6 @@ github.com/ajg/form v1.5.1 h1:t9c7v8JUKu/XxOGBU0yjNpaMloxGEJhUkqFRq0ibGeU=
 github.com/ajg/form v1.5.1/go.mod h1:uL1WgH+h2mgNtvBq0339dVnzXdBETtL2LeUXaIv25UY=
 github.com/rmullinnix/logger v0.0.0-20150416125034-f00c748795a4 h1:zTMNHXZRftcm8vfJCIFlFBuqOhH8D80VtfTRDoM+Pw8=
 github.com/rmullinnix/logger v0.0.0-20150416125034-f00c748795a4/go.mod h1:p7hjur2C0Mw05FB5DM1ks59jKxlcG/umYWKQ7E7hsyA=
+github.com/rmullinnix461332/logger v0.1.0 h1:YmpfzzPWtGAlzrLtycovNbM2woNQEt7NaDxVc8cAPFY=
+github.com/rmullinnix461332/logger v0.1.1 h1:JjYhS7ou7rDB8Oj65IdKmIWRI2+MAKe+zfYCL/fAmyU=
+github.com/rmullinnix461332/logger v0.1.1/go.mod h1:S9w/PQA4a6k+8SMvOhS+4AEYqOpumIWFxhy9C1JVKsw=
