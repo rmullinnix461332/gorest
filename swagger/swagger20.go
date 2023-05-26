@@ -287,6 +287,8 @@ func _spec20() *SwaggerAPI20 {
 func swaggerDocumentor20(basePath string, svcTypes map[string]gorest.ServiceMetaData, endPoints map[string]gorest.EndPointStruct, securityDef map[string]gorest.SecurityStruct) interface{} {
 	spec20 = newSpec20(basePath, len(svcTypes), len(endPoints))
 
+	spec20.Schemes = append(spec20.Schemes, "http")
+	spec20.Schemes = append(spec20.Schemes, "https")
 	x := 0
 	var svcInt 	reflect.Type 
 	for _, st := range svcTypes {
