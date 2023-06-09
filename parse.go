@@ -392,6 +392,10 @@ func addMimeType(mimeType string) bool {
 			RegisterMarshaller("xml", NewXMLMarshaller())
 		} else if strings.Contains(mimeType, "x-www-form-urlencoded") {
 			RegisterMarshaller("x-www-form-urlencodedxml", NewFormMarshaller())
+		} else if strings.Contains(mimeType, "x-www-form-urlencoded") {
+			RegisterMarshaller("x-www-form-urlencodedxml", NewFormMarshaller())
+		} else if strings.Contains(mimeType, "form-data") {
+			RegisterMarshaller("form-data", NewJSONMarshaller())
 		} else {
 			return false
 		}

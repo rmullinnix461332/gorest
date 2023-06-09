@@ -376,21 +376,32 @@ func prepareServe(rb *ResponseBuilder, ep EndPointStruct, args map[string]string
 	//For POST and PUT, make and add the first "postdata" argument to the argument list
 	if len(ep.PostdataType) > 0 {
 
-		//Get postdata here
-		//TODO: Also check if this is a multipart post and handle as required.
-		buf := new(bytes.Buffer)
-		io.Copy(buf, rb.ctx.request.Body)
-		body := buf.String()
-
-		//println("This is the body of the post:",body)
-		logger.Info.Println("[gen] body of the post " + body)
-
-		if v, valid := makeArg(body, targetMethod.Type.In(1), mime); valid {
-			arrArgs = append(arrArgs, v)
+		body := ""
+		if strings.Contains(contentType, "form-data") {
+			err := rb.ctx.request.ParseMultipartForm(2 << 20) 
+			if err != nil {
+			}
+			mph := rb.ctx.request.MultipartForm.File["file"]
+			logger.Info.Println("mph", mph[0].Filename)
+			arrArgs = append(arrArgs, reflect.ValueOf(mph[0].Filename))
+			
 		} else {
-			rb.SetResponseCode(http.StatusBadRequest)
-			rb.SetResponseMsg("Error unmarshalling data using " + mime)
-			return
+			//Get postdata here
+			//TODO: Also check if this is a multipart post and handle as required.
+			buf := new(bytes.Buffer)
+			io.Copy(buf, rb.ctx.request.Body)
+			body = buf.String()
+
+			//println("This is the body of the post:",body)
+			logger.Info.Println("[gen] body of the post " + body)
+
+			if v, valid := makeArg(body, targetMethod.Type.In(1), mime); valid {
+				arrArgs = append(arrArgs, v)
+			} else {
+				rb.SetResponseCode(http.StatusBadRequest)
+				rb.SetResponseMsg("Error unmarshalling data using " + mime)
+				return
+			}
 		}
 	}
 

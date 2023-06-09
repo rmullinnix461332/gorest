@@ -99,6 +99,8 @@ func bytesToInterface(buf *bytes.Buffer, i interface{}, mime string) error {
 		marshalType = "json"
 	} else if strings.Contains(mime, "xml") {
 		marshalType = "xml"
+	} else if strings.Contains(mime, "form-data") {
+		return nil
 	}
 
 	v := reflect.ValueOf(i)
