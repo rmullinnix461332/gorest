@@ -284,10 +284,11 @@ func Tracer(packageName string, oltpEndpoint string, headers map[string]string) 
 	var client		otlptrace.Client
 
 	if len(headers) == 0 {
-		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), otlptracehttp.WithInsecure())
+		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), otlptracehttp.WithInsecure(), otlptracehttp.WithURLPath("/otlp/v1/traces"))
 	} else {
 		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), 
 					otlptracehttp.WithInsecure(),
+					otlptracehttp.WithURLPath("/otlp/v1/traces"),
 					otlptracehttp.WithHeaders(headers))
 	}
 
