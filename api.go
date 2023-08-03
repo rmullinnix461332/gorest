@@ -34,6 +34,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -197,6 +198,9 @@ type Context struct {
 	responseMimeType   string
 	dataHasBeenWritten bool
 	encodeGzip	   bool
+
+	// otel Span
+	span		  trace.Span
 }
 
 //This will write to the response and then call Overide(true), even if it had been set to "false" in a previous call.

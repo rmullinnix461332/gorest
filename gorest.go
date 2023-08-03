@@ -58,6 +58,7 @@
 package gorest
 
 import (
+	"context"
 	"encoding/json"
 	"encoding/base64"
 	"github.com/rmullinnix461332/logger"
@@ -67,6 +68,15 @@ import (
 	"strings"
 	"time"
 	//"compress/gzip"
+//	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
 type GoRestService interface {
@@ -143,6 +153,8 @@ type manager struct {
 	allowOrigin	string
 	allowOriginSet	bool
 	swaggerEP	string
+	tracer		trace.Tracer
+	tracerSet	bool
 }
 
 type SecurityStruct struct {
@@ -169,6 +181,7 @@ func newManager() *manager {
 	man.endpoints = make(map[string]EndPointStruct, 0)
 	man.securityDef = make(map[string]SecurityStruct, 0)
 	man.allowOriginSet = false
+	man.tracerSet = false
 
 	man.pathDict = make(map[string]int, 0)
 	man.pathDict["bool"] = 1
@@ -263,6 +276,24 @@ func RegisterServiceOnPath(root string, h interface{}) {
 	registerService(root, h)
 }
 
+func Resource(packageName string) *resource.Resource {
+	return resource.NewWithAttributes(semconv.SchemaURL, semconv.ServiceName(packageName), semconv.ServiceVersion("1.0.0"),)
+}
+
+func Tracer(packageName string, oltpEndpoint string) {
+	client := otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), otlptracehttp.WithInsecure())
+	exporter, err := otlptrace.New(context.Background(), client)
+	if err != nil {
+		logger.Error.Println("creating stdout exporter", err)
+	}
+
+	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter), sdktrace.WithResource(Resource(packageName)))
+	otel.SetTracerProvider(tracerProvider)
+
+	_manager().tracerSet = true
+	_manager().tracer = tracerProvider.Tracer("github.com/rmullinnix461332/gorest")
+}
+
 //ServeHTTP dispatches the request to the handler whose pattern most closely matches the request URL.
 func (this manager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rb := new(ResponseBuilder)
@@ -273,10 +304,15 @@ func (this manager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rb.ctx.sessData.relSessionData = make(map[string]interface{})
 	rb.ctx.sessData.relSessionData["Host"] = r.Host
 	rb.ctx.sessStart = time.Now().Local()
+
+	if this.tracerSet {
+	} else {
+		defer rb.PerfLog()
+	}
+
 	if _manager().allowOriginSet {
 		rb.ctx.sessData.relSessionData["Origin"] = _manager().allowOrigin
 	}
-	defer rb.PerfLog()
 
 	url_, err := url.QueryUnescape(r.URL.RequestURI())
 
@@ -313,6 +349,16 @@ func (this manager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} 
 
 	if ep, args, queryArgs, _, found := getEndPointByUrl(r.Method, url_); found {
+		if this.tracerSet {
+			rb.ctx.span = trace.SpanFromContext(r.Context())
+			rb.ctx.span.SetName(ep.Signiture)
+			defer rb.ctx.span.End()
+
+			for key, value := range args {
+				rb.ctx.span.SetAttributes(attribute.String(key, value))
+			}
+		}
+
 		rb.ctx.xsrftoken = getAuthKey(ep.SecurityScheme, queryArgs, r, w)
 
 		prepareServe(rb, ep, args, queryArgs)
