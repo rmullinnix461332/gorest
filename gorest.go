@@ -59,7 +59,6 @@ package gorest
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"encoding/base64"
 	"github.com/rmullinnix461332/logger"
@@ -285,10 +284,10 @@ func Tracer(packageName string, oltpEndpoint string, headers map[string]string) 
 	var client		otlptrace.Client
 
 	if len(headers) == 0 {
-		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), otlptracehttp.WithTLSClientConfig(&tls.Config{InsecureSkipVerify: true}))
+		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), otlptracehttp.WithInsecure())
 	} else {
 		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), 
-					otlptracehttp.WithTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
+					otlptracehttp.WithInsecure(),
 					otlptracehttp.WithHeaders(headers))
 	}
 
