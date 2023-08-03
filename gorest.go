@@ -59,6 +59,7 @@ package gorest
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"encoding/base64"
 	"github.com/rmullinnix461332/logger"
@@ -280,8 +281,17 @@ func Resource(packageName string) *resource.Resource {
 	return resource.NewWithAttributes(semconv.SchemaURL, semconv.ServiceName(packageName), semconv.ServiceVersion("1.0.0"),)
 }
 
-func Tracer(packageName string, oltpEndpoint string) {
-	client := otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), otlptracehttp.WithInsecure())
+func Tracer(packageName string, oltpEndpoint string, headers map[string]string) {
+	var client		otlptrace.Client
+
+	if len(headers) == 0 {
+		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), otlptracehttp.WithTLSClientConfig(&tls.Config{InsecureSkipVerify: true}))
+	} else {
+		client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(oltpEndpoint), 
+					otlptracehttp.WithTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
+					otlptracehttp.WithHeaders(headers))
+	}
+
 	exporter, err := otlptrace.New(context.Background(), client)
 	if err != nil {
 		logger.Error.Println("creating stdout exporter", err)
