@@ -165,6 +165,7 @@ func makeEndPointStruct(tags reflect.StructTag, serviceRoot string) EndPointStru
 
 	ms := new(EndPointStruct)
 
+	ms.perfLog = true
 	if tag := tags.Get("method"); tag != "" {
 		ok := false
 		if ms.RequestMethod, ok = methodMap[tag]; !ok {
@@ -286,6 +287,9 @@ func makeEndPointStruct(tags reflect.StructTag, serviceRoot string) EndPointStru
 				scopes = append(scopes, items...)
 			}
 			ms.SecurityScheme[name] = scopes 
+		}
+		if tag := tags.Get("perflog"); tag != "" {
+			ms.perfLog = (tag == "true")
 		}
 
 		parseParams(ms)

@@ -34,6 +34,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -313,4 +314,16 @@ func (this *ResponseBuilder) PerfLog() {
 	}
 
 	logger.Info.Println("[perf] host: " + host + " remote: " + r.RemoteAddr + " useruuid: " + useruuid + " url: " + url_ + " method: " + r.Method + " dur:", int64(elapsed/time.Millisecond), "ms", " response: ", this.ctx.responseCode)
+}
+
+func (this *ResponseBuilder) TraceLog() {
+	span := this.ctx.span
+
+	useruuid, found := this.Session().GetString("UserUUID")
+	if !found {
+		useruuid = "public"
+	}
+
+	span.SetAttributes(attribute.Int("status.code", this.ctx.responseCode))
+	span.SetAttributes(attribute.String("useruuid", useruuid))
 }

@@ -119,6 +119,7 @@ type EndPointStruct struct {
 	ConsumesMime 	     []string // overrides the consumes mime type
 	allowGzip 	     int // 0 false, 1 true, 2 unitialized
 	SecurityScheme	     map[string][]string // must match one of securityDef
+	perfLog		     bool
 }
 
 type restStatus struct {
@@ -315,16 +316,20 @@ func (this manager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rb.ctx.sessData.relSessionData["Host"] = r.Host
 	rb.ctx.sessStart = time.Now().Local()
 
-	if this.tracerSet {
-	} else {
-		defer rb.PerfLog()
-	}
-
 	if _manager().allowOriginSet {
 		rb.ctx.sessData.relSessionData["Origin"] = _manager().allowOrigin
 	}
 
 	url_, err := url.QueryUnescape(r.URL.RequestURI())
+	ep, args, queryArgs, _, found := getEndPointByUrl(r.Method, url_)
+
+	if this.tracerSet {
+		defer rb.TraceLog()
+	} else {
+		if ep.perfLog {
+			defer rb.PerfLog()
+		}
+	}
 
 	if err != nil {
 		logger.Warning.Println("[gen] Could not serve page: ", r.Method, r.URL.RequestURI(), "Error:", err)
@@ -358,7 +363,7 @@ func (this manager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	} 
 
-	if ep, args, queryArgs, _, found := getEndPointByUrl(r.Method, url_); found {
+	if found {
 		if this.tracerSet {
 			rb.ctx.span = trace.SpanFromContext(r.Context())
 			rb.ctx.span.SetName(ep.Signiture)
